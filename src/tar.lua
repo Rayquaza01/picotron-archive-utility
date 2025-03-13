@@ -1,4 +1,6 @@
---[[pod_format="raw",created="2025-02-03 01:50:44",modified="2025-02-03 15:20:49",revision=652]]
+--[[pod_format="raw",created="2025-02-03 01:50:44",modified="2025-02-03 18:16:49",revision=655]]
+
+include("mkdirp.lua")
 
 --- @class __TAR
 --- @field name string
@@ -70,4 +72,32 @@ local function ExtractTar(tar)
 	return files
 end
 
-return ExtractTar
+--- Write the contents of a tar archive to the filesystem
+--- @param tar __TAR[]
+--- @param folder? string
+local function WriteTar(tar, folder)
+	if not folder then
+		folder = "/"
+	end
+
+	if not folder:find("/$") then
+		folder = folder .. "/"
+	end
+
+	for file in all(tar) do
+		local path = fullpath(folder .. file.prefix .. file.name)
+
+		--- @cast file __TAR
+		if file.typeflag == "5" then
+			mkdir(path)
+		else
+			mkdirp(path:dirname())
+			store(path, file.content)
+		end
+	end
+end
+
+return {
+	ExtractTar = ExtractTar,
+	WriteTar = WriteTar
+}
